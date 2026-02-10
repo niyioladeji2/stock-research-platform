@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Stock Research Platform</title>
 
+  <!-- Tailwind (CDN OK for demo) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: system-ui, -apple-system, sans-serif; }
   </style>
 </head>
@@ -16,83 +16,86 @@
 
   <div id="root"></div>
 
-  <!-- Core libraries -->
+  <!-- React -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
+
+  <!-- Lucide (SAFE version, not react) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
   <script type="text/babel">
-    const {
-      Sparkles,
-      TrendingUp,
-      TrendingDown,
-      CheckCircle,
-      Search,
-      BarChart2,
-      Clock,
-      Newspaper,
-      Briefcase,
-      Bell,
-      X
-    } = lucideReact;
+
+    const Icon = ({ name, className }) =>
+      React.createElement(
+        'i',
+        { 'data-lucide': name, className }
+      );
 
     const StockResearchPlatform = () => {
-      const [searchTerm, setSearchTerm] = React.useState('');
-      const [selectedStock, setSelectedStock] = React.useState(null);
-      const [stockData, setStockData] = React.useState(null);
+      const [search, setSearch] = React.useState('');
+      const [selected, setSelected] = React.useState(null);
       const [loading, setLoading] = React.useState(false);
 
       const stocks = [
         { symbol: 'AAPL', name: 'Apple Inc.' },
-        { symbol: 'MSFT', name: 'Microsoft Corporation' },
-        { symbol: 'GOOGL', name: 'Alphabet Inc.' },
-        { symbol: 'AMZN', name: 'Amazon.com Inc.' },
-        { symbol: 'NVDA', name: 'NVIDIA Corporation' }
+        { symbol: 'MSFT', name: 'Microsoft' },
+        { symbol: 'GOOGL', name: 'Alphabet' },
+        { symbol: 'AMZN', name: 'Amazon' },
+        { symbol: 'NVDA', name: 'NVIDIA' }
       ];
 
-      const analyzeStock = (symbol) => {
+      React.useEffect(() => {
+        lucide.createIcons();
+      });
+
+      const analyze = (symbol) => {
         setLoading(true);
-        setSelectedStock(symbol);
+        setSelected(null);
 
         setTimeout(() => {
-          setStockData({
+          setSelected({
             symbol,
             price: (100 + Math.random() * 200).toFixed(2),
-            change: (Math.random() * 5).toFixed(2),
+            change: (Math.random() * 6 - 3).toFixed(2),
             sentiment: Math.random() > 0.5 ? 'Bullish' : 'Bearish'
           });
           setLoading(false);
-        }, 800);
+        }, 700);
       };
 
       return (
         <div className="min-h-screen bg-gray-50 p-6">
-          <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-purple-600" />
+          <h1 className="text-3xl font-bold mb-6 flex items-center gap-3">
+            <Icon name="sparkles" className="w-8 h-8 text-purple-600" />
             AI Stock Research Platform
           </h1>
 
           <input
-            className="border p-2 rounded w-full mb-4"
+            className="border p-2 rounded w-full mb-6"
             placeholder="Search stocks..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {stocks
               .filter(s =>
-                s.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                s.name.toLowerCase().includes(searchTerm.toLowerCase())
+                s.symbol.toLowerCase().includes(search.toLowerCase()) ||
+                s.name.toLowerCase().includes(search.toLowerCase())
               )
               .map(stock => (
                 <button
                   key={stock.symbol}
-                  onClick={() => analyzeStock(stock.symbol)}
-                  className="bg-white p-4 rounded shadow hover:shadow-md text-left"
+                  onClick={() => analyze(stock.symbol)}
+                  className="bg-white p-4 rounded shadow hover:shadow-md text-left transition"
                 >
-                  <div className="font-bold">{stock.symbol}</div>
+                  <div className="flex items-center gap-2">
+                    <Icon name="trending-up" className="w-5 h-5 text-gray-500" />
+                    <div className="font-bold">{stock.symbol}</div>
+                  </div>
                   <div className="text-sm text-gray-600">{stock.name}</div>
                 </button>
               ))}
@@ -104,15 +107,26 @@
             </div>
           )}
 
-          {stockData && !loading && (
+          {selected && !loading && (
             <div className="mt-6 bg-white p-6 rounded shadow">
-              <h2 className="text-xl font-bold mb-2">
-                {stockData.symbol} Analysis
+              <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+                <Icon name="bar-chart-2" className="w-5 h-5" />
+                {selected.symbol} Analysis
               </h2>
-              <p>Price: ${stockData.price}</p>
-              <p>Change: {stockData.change}%</p>
-              <p className="font-semibold mt-2">
-                Sentiment: {stockData.sentiment}
+
+              <p>Price: ${selected.price}</p>
+              <p>Change: {selected.change}%</p>
+
+              <p className="mt-2 font-semibold flex items-center gap-2">
+                <Icon
+                  name={selected.sentiment === 'Bullish' ? 'trending-up' : 'trending-down'}
+                  className={`w-5 h-5 ${
+                    selected.sentiment === 'Bullish'
+                      ? 'text-green-600'
+                      : 'text-red-600'
+                  }`}
+                />
+                {selected.sentiment}
               </p>
             </div>
           )}
@@ -120,9 +134,9 @@
       );
     };
 
-    // 🔑 THIS WAS MISSING — REQUIRED TO RENDER
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<StockResearchPlatform />);
+
   </script>
 
 </body>
