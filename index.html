@@ -12,7 +12,10 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-  <!-- Lucide icons -->
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Lucide UMD -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
@@ -21,178 +24,177 @@
 
   <script>
     const e = React.createElement;
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
 
-    const sp500Stocks = [
-      { symbol: 'AAPL', name: 'Apple Inc.' },
-      { symbol: 'MSFT', name: 'Microsoft Corporation' },
-      { symbol: 'GOOGL', name: 'Alphabet Inc.' },
-      { symbol: 'AMZN', name: 'Amazon.com Inc.' },
-      { symbol: 'NVDA', name: 'NVIDIA Corporation' },
-      { symbol: 'TSLA', name: 'Tesla Inc.' },
-      { symbol: 'META', name: 'Meta Platforms Inc.' },
-      { symbol: 'JPM', name: 'JPMorgan Chase' },
-      { symbol: 'V', name: 'Visa Inc.' },
-      { symbol: 'WMT', name: 'Walmart Inc.' },
-      { symbol: 'SPY', name: 'S&P 500 ETF' },
-      { symbol: 'QQQ', name: 'Nasdaq-100 ETF' }
-    ];
+    function Icon({ name, className }) {
+      return e("i", { "data-lucide": name, className });
+    }
 
-    const basePrices = {
-      AAPL: 230, MSFT: 425, GOOGL: 175, AMZN: 205, NVDA: 140,
-      TSLA: 350, META: 580, JPM: 220, V: 300, WMT: 85,
-      SPY: 580, QQQ: 505
-    };
-
-    function Icon({ name, className = '' }) {
-      return e('i', { 'data-lucide': name, className });
+    function generateNewsHeadlines(symbol, sentiment) {
+      return [
+        {
+          headline: symbol + " shows strong institutional interest",
+          source: "MarketWatch",
+          time: "2h ago",
+          sentiment: sentiment === "Bullish" ? "Positive" : "Neutral"
+        },
+        {
+          headline: "Analysts reassess outlook for " + symbol,
+          source: "Bloomberg",
+          time: "5h ago",
+          sentiment: "Neutral"
+        },
+        {
+          headline: symbol + " volatility attracts options traders",
+          source: "Reuters",
+          time: "1d ago",
+          sentiment: sentiment === "Bearish" ? "Negative" : "Neutral"
+        }
+      ];
     }
 
     function generateDemoData(symbol) {
-      const stock = sp500Stocks.find(s => s.symbol === symbol);
-      if (!stock) return null;
-
-      const base = basePrices[symbol] || 100;
-      const changePct = (Math.random() - 0.5) * 0.06;
-      const price = base * (1 + changePct);
-
+      const base = 100 + Math.random() * 400;
       return {
         symbol,
-        name: stock.name,
-        price: price.toFixed(2),
-        change: (price - base).toFixed(2),
-        changePercent: (changePct * 100).toFixed(2),
-        marketCap: ((price * 15e9) / 1e9).toFixed(2) + 'B',
-        pe: (15 + Math.random() * 30).toFixed(1),
-        roe: (15 + Math.random() * 35).toFixed(1) + '%',
-        revenueGrowth: (5 + Math.random() * 25).toFixed(1) + '%',
-        earningsGrowth: (8 + Math.random() * 30).toFixed(1) + '%',
-        profitMargin: (10 + Math.random() * 30).toFixed(1) + '%',
-        dividendYield: Math.random() > 0.4 ? (Math.random() * 4).toFixed(2) + '%' : 'N/A',
-        sentiment: Math.random() > 0.4 ? 'Bullish' : Math.random() > 0.5 ? 'Neutral' : 'Bearish',
-        score: Math.floor(55 + Math.random() * 35),
-        week52Low: (price * 0.75).toFixed(2),
-        week52High: (price * 1.25).toFixed(2)
+        price: base.toFixed(2),
+        sma50: (base * 0.97).toFixed(2),
+        sma200: (base * 0.92).toFixed(2),
+        rsi: Math.floor(30 + Math.random() * 40),
+        macd: Math.random() > 0.5 ? "Bullish" : "Bearish",
+        trend: Math.random() > 0.5 ? "Uptrend" : "Downtrend",
+        support: (base * 0.9).toFixed(2),
+        sentiment: Math.random() > 0.5 ? "Bullish" : "Neutral",
+        sentimentScore: Math.floor(55 + Math.random() * 35)
       };
     }
 
-    function App() {
-      const [symbol, setSymbol] = useState('');
+    function StockResearchPlatform() {
+      const [symbol, setSymbol] = useState("");
       const [stockData, setStockData] = useState(null);
-      const [loading, setLoading] = useState(false);
-      const [activeTab, setActiveTab] = useState('overview');
+      const [activeTab, setActiveTab] = useState("technical");
+      const chartRef = useRef(null);
 
-      useEffect(() => lucide.createIcons());
+      useEffect(() => {
+        lucide.createIcons();
+      });
+
+      useEffect(() => {
+        if (activeTab === "technical" && stockData) {
+          const ctx = document.getElementById("priceChart");
+          if (!ctx) return;
+
+          if (chartRef.current) {
+            chartRef.current.destroy();
+          }
+
+          chartRef.current = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: Array.from({ length: 6 }, (_, i) => `M-${6 - i}`),
+              datasets: [
+                {
+                  label: "Price",
+                  data: Array.from({ length: 6 }, () => Math.random() * 100 + 100),
+                  borderWidth: 2
+                },
+                {
+                  label: "SMA 50",
+                  data: Array.from({ length: 6 }, () => Math.random() * 90 + 95),
+                  borderWidth: 2
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } }
+            }
+          });
+        }
+      }, [activeTab, stockData]);
 
       function analyze() {
         if (!symbol) return;
-        setLoading(true);
-        setTimeout(() => {
-          setStockData(generateDemoData(symbol.toUpperCase()));
-          setLoading(false);
-        }, 600);
+        setStockData(generateDemoData(symbol.toUpperCase()));
       }
 
-      return e('div', { className: 'min-h-screen' },
+      return e("div", { className: "min-h-screen" },
 
-        e('div', { className: 'max-w-6xl mx-auto p-6' },
+        e("div", { className: "max-w-7xl mx-auto p-6" },
 
-          e('h1', { className: 'text-3xl font-bold mb-6 flex items-center gap-2' },
-            e(Icon, { name: 'bar-chart-2', className: 'w-8 h-8' }),
-            'AI Stock Research Platform'
+          e("h1", { className: "text-3xl font-bold mb-6 flex items-center gap-2" },
+            e(Icon, { name: "bar-chart-2", className: "w-8 h-8" }),
+            "AI Stock Research Platform"
           ),
 
-          e('div', { className: 'flex gap-2 mb-6' },
-            e('input', {
-              id: 'stock',
-              name: 'stock',
+          e("div", { className: "flex gap-2 mb-6" },
+            e("input", {
+              id: "symbol",
+              name: "symbol",
+              className: "flex-1 border rounded px-4 py-3",
+              placeholder: "Enter stock symbol",
               value: symbol,
-              onChange: ev => setSymbol(ev.target.value),
-              placeholder: 'Enter stock symbol (AAPL)',
-              className: 'flex-1 border rounded px-4 py-3'
+              onChange: ev => setSymbol(ev.target.value)
             }),
-            e('button', {
-              onClick: analyze,
-              className: 'bg-blue-600 text-white px-6 rounded font-semibold flex items-center gap-2'
-            },
-              e(Icon, { name: 'search', className: 'w-5 h-5' }),
-              'Analyze'
-            )
+            e("button", {
+              className: "bg-blue-600 text-white px-6 rounded font-semibold",
+              onClick: analyze
+            }, "Analyze")
           ),
 
-          loading && e('p', { className: 'text-gray-500' }, 'Analyzing…'),
+          stockData && e("div", { className: "bg-white rounded-lg shadow p-6" },
 
-          stockData && !loading && e('div', null,
-
-            e('div', { className: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6 mb-6' },
-              e('div', { className: 'flex justify-between items-center' },
-                e('div', null,
-                  e('div', { className: 'text-4xl font-bold' }, stockData.symbol),
-                  e('div', { className: 'text-blue-100' }, stockData.name)
-                ),
-                e('div', { className: 'text-right' },
-                  e('div', { className: 'text-3xl font-bold' }, '$' + stockData.price),
-                  e('div', {
-                    className: stockData.change >= 0 ? 'text-green-300' : 'text-red-300'
-                  },
-                    (stockData.change >= 0 ? '+' : '') + stockData.change +
-                    ' (' + stockData.changePercent + '%)'
-                  )
-                )
+            e("div", { className: "flex border-b mb-6" },
+              ["technical", "options", "news"].map(tab =>
+                e("button", {
+                  key: tab,
+                  onClick: () => setActiveTab(tab),
+                  className:
+                    "px-6 py-3 font-semibold " +
+                    (activeTab === tab
+                      ? "border-b-2 border-blue-600 text-blue-600"
+                      : "text-gray-600")
+                }, tab.toUpperCase())
               )
             ),
 
-            e('div', { className: 'bg-white rounded-lg shadow' },
+            activeTab === "technical" && e("div", null,
+              e("h3", { className: "text-xl font-bold mb-4" }, "Technical Analysis"),
+              e("canvas", { id: "priceChart", height: 300 })
+            ),
 
-              e('div', { className: 'flex border-b' },
-                ['overview', 'fundamental', 'news'].map(tab =>
-                  e('button', {
-                    key: tab,
-                    onClick: () => setActiveTab(tab),
-                    className:
-                      'px-6 py-4 font-semibold ' +
-                      (activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600')
-                  }, tab.charAt(0).toUpperCase() + tab.slice(1))
-                )
-              ),
+            activeTab === "options" && e("div", { className: "space-y-6" },
+              e("h3", { className: "text-xl font-bold" }, "Options Strategies"),
+              e("div", { className: "bg-green-50 p-6 rounded-lg" },
+                e("div", { className: "flex items-center gap-2 mb-2" },
+                  e(Icon, { name: "trending-up", className: "w-5 h-5" }),
+                  e("strong", null, "Call Strategy")
+                ),
+                "60-day ATM calls with bullish momentum"
+              )
+            ),
 
-              e('div', { className: 'p-6' },
-
-                activeTab === 'overview' && e('div', { className: 'grid md:grid-cols-4 gap-4' },
-                  ['marketCap', 'pe', 'roe', 'sentiment'].map(key =>
-                    e('div', { key, className: 'bg-gray-50 rounded p-4' },
-                      e('div', { className: 'text-sm text-gray-600' }, key),
-                      e('div', { className: 'text-xl font-bold' }, stockData[key])
-                    )
+            activeTab === "news" && e("div", { className: "space-y-4" },
+              generateNewsHeadlines(stockData.symbol, stockData.sentiment).map((n, i) =>
+                e("div", { key: i, className: "bg-gray-50 p-4 rounded" },
+                  e("strong", null, n.headline),
+                  e("div", { className: "text-sm text-gray-600" },
+                    n.source, " • ", n.time
                   )
-                ),
-
-                activeTab === 'fundamental' && e('div', { className: 'space-y-3' },
-                  e('div', null, 'Revenue Growth: ', stockData.revenueGrowth),
-                  e('div', null, 'Earnings Growth: ', stockData.earningsGrowth),
-                  e('div', null, 'Profit Margin: ', stockData.profitMargin)
-                ),
-
-                activeTab === 'news' && e('div', { className: 'space-y-2' },
-                  e('div', null, stockData.symbol, ' beats earnings expectations'),
-                  e('div', null, 'Analysts upgrade outlook'),
-                  e('div', null, 'Market sentiment remains ', stockData.sentiment)
                 )
-
               )
             )
           )
         ),
 
-        e('footer', { className: 'bg-gray-900 text-white py-6 mt-12' },
-          e('div', { className: 'text-center text-sm text-gray-400' },
-            '© 2026 AI Stock Research Platform • Educational use only'
-          )
+        e("footer", { className: "bg-gray-900 text-white py-6 mt-12 text-center text-sm text-gray-400" },
+          "© 2026 AI Stock Research Platform • Educational use only"
         )
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+    ReactDOM.createRoot(document.getElementById("root"))
+      .render(e(StockResearchPlatform));
   </script>
 </body>
 </html>
