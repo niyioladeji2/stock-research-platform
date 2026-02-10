@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Stock Research Platform</title>
 
-  <!-- Tailwind (CDN OK for demo) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -17,24 +16,19 @@
   <div id="root"></div>
 
   <!-- React -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-  <!-- Babel -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- Lucide (SAFE version, not react) -->
+  <!-- Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <script type="text/babel">
+  <script>
+    const e = React.createElement;
 
     const Icon = ({ name, className }) =>
-      React.createElement(
-        'i',
-        { 'data-lucide': name, className }
-      );
+      e('i', { 'data-lucide': name, className });
 
-    const StockResearchPlatform = () => {
+    function App() {
       const [search, setSearch] = React.useState('');
       const [selected, setSelected] = React.useState(null);
       const [loading, setLoading] = React.useState(false);
@@ -51,7 +45,7 @@
         lucide.createIcons();
       });
 
-      const analyze = (symbol) => {
+      function analyze(symbol) {
         setLoading(true);
         setSelected(null);
 
@@ -63,80 +57,59 @@
             sentiment: Math.random() > 0.5 ? 'Bullish' : 'Bearish'
           });
           setLoading(false);
-        }, 700);
-      };
+        }, 600);
+      }
 
-      return (
-        <div className="min-h-screen bg-gray-50 p-6">
-          <h1 className="text-3xl font-bold mb-6 flex items-center gap-3">
-            <Icon name="sparkles" className="w-8 h-8 text-purple-600" />
-            AI Stock Research Platform
-          </h1>
+      return e(
+        'div',
+        { className: 'min-h-screen bg-gray-50 p-6' },
 
-          <input
-            className="border p-2 rounded w-full mb-6"
-            placeholder="Search stocks..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+        e('h1', { className: 'text-3xl font-bold mb-6 flex items-center gap-3' },
+          e(Icon, { name: 'sparkles', className: 'w-8 h-8 text-purple-600' }),
+          'AI Stock Research Platform'
+        ),
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {stocks
-              .filter(s =>
-                s.symbol.toLowerCase().includes(search.toLowerCase()) ||
-                s.name.toLowerCase().includes(search.toLowerCase())
+        e('label', { htmlFor: 'stockSearch', className: 'block mb-2 font-medium' }, 'Search stocks'),
+        e('input', {
+          id: 'stockSearch',
+          name: 'stockSearch',
+          className: 'border p-2 rounded w-full mb-6',
+          value: search,
+          onChange: ev => setSearch(ev.target.value)
+        }),
+
+        e('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
+          stocks
+            .filter(s =>
+              s.symbol.toLowerCase().includes(search.toLowerCase()) ||
+              s.name.toLowerCase().includes(search.toLowerCase())
+            )
+            .map(stock =>
+              e('button', {
+                key: stock.symbol,
+                onClick: () => analyze(stock.symbol),
+                className: 'bg-white p-4 rounded shadow text-left'
+              },
+                e('div', { className: 'font-bold' }, stock.symbol),
+                e('div', { className: 'text-sm text-gray-600' }, stock.name)
               )
-              .map(stock => (
-                <button
-                  key={stock.symbol}
-                  onClick={() => analyze(stock.symbol)}
-                  className="bg-white p-4 rounded shadow hover:shadow-md text-left transition"
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon name="trending-up" className="w-5 h-5 text-gray-500" />
-                    <div className="font-bold">{stock.symbol}</div>
-                  </div>
-                  <div className="text-sm text-gray-600">{stock.name}</div>
-                </button>
-              ))}
-          </div>
+            )
+        ),
 
-          {loading && (
-            <div className="mt-6 text-purple-600 font-semibold">
-              Analyzing stock…
-            </div>
-          )}
+        loading && e('p', { className: 'mt-6 text-purple-600 font-semibold' }, 'Analyzing…'),
 
-          {selected && !loading && (
-            <div className="mt-6 bg-white p-6 rounded shadow">
-              <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-                <Icon name="bar-chart-2" className="w-5 h-5" />
-                {selected.symbol} Analysis
-              </h2>
-
-              <p>Price: ${selected.price}</p>
-              <p>Change: {selected.change}%</p>
-
-              <p className="mt-2 font-semibold flex items-center gap-2">
-                <Icon
-                  name={selected.sentiment === 'Bullish' ? 'trending-up' : 'trending-down'}
-                  className={`w-5 h-5 ${
-                    selected.sentiment === 'Bullish'
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  }`}
-                />
-                {selected.sentiment}
-              </p>
-            </div>
-          )}
-        </div>
+        selected && !loading && e(
+          'div',
+          { className: 'mt-6 bg-white p-6 rounded shadow' },
+          e('h2', { className: 'text-xl font-bold mb-2' }, selected.symbol),
+          e('p', null, 'Price: $' + selected.price),
+          e('p', null, 'Change: ' + selected.change + '%'),
+          e('p', { className: 'mt-2 font-semibold' }, selected.sentiment)
+        )
       );
-    };
+    }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<StockResearchPlatform />);
-
+    ReactDOM.createRoot(document.getElementById('root')).render(e(App));
   </script>
 
 </body>
