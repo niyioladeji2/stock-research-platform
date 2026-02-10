@@ -77,3 +77,122 @@
     }
 
     function App() {
+      const [symbol, setSymbol] = useState('');
+      const [stockData, setStockData] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [activeTab, setActiveTab] = useState('overview');
+
+      useEffect(() => lucide.createIcons());
+
+      function analyze() {
+        if (!symbol) return;
+        setLoading(true);
+        setTimeout(() => {
+          setStockData(generateDemoData(symbol.toUpperCase()));
+          setLoading(false);
+        }, 600);
+      }
+
+      return e('div', { className: 'min-h-screen' },
+
+        e('div', { className: 'max-w-6xl mx-auto p-6' },
+
+          e('h1', { className: 'text-3xl font-bold mb-6 flex items-center gap-2' },
+            e(Icon, { name: 'bar-chart-2', className: 'w-8 h-8' }),
+            'AI Stock Research Platform'
+          ),
+
+          e('div', { className: 'flex gap-2 mb-6' },
+            e('input', {
+              id: 'stock',
+              name: 'stock',
+              value: symbol,
+              onChange: ev => setSymbol(ev.target.value),
+              placeholder: 'Enter stock symbol (AAPL)',
+              className: 'flex-1 border rounded px-4 py-3'
+            }),
+            e('button', {
+              onClick: analyze,
+              className: 'bg-blue-600 text-white px-6 rounded font-semibold flex items-center gap-2'
+            },
+              e(Icon, { name: 'search', className: 'w-5 h-5' }),
+              'Analyze'
+            )
+          ),
+
+          loading && e('p', { className: 'text-gray-500' }, 'Analyzing…'),
+
+          stockData && !loading && e('div', null,
+
+            e('div', { className: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6 mb-6' },
+              e('div', { className: 'flex justify-between items-center' },
+                e('div', null,
+                  e('div', { className: 'text-4xl font-bold' }, stockData.symbol),
+                  e('div', { className: 'text-blue-100' }, stockData.name)
+                ),
+                e('div', { className: 'text-right' },
+                  e('div', { className: 'text-3xl font-bold' }, '$' + stockData.price),
+                  e('div', {
+                    className: stockData.change >= 0 ? 'text-green-300' : 'text-red-300'
+                  },
+                    (stockData.change >= 0 ? '+' : '') + stockData.change +
+                    ' (' + stockData.changePercent + '%)'
+                  )
+                )
+              )
+            ),
+
+            e('div', { className: 'bg-white rounded-lg shadow' },
+
+              e('div', { className: 'flex border-b' },
+                ['overview', 'fundamental', 'news'].map(tab =>
+                  e('button', {
+                    key: tab,
+                    onClick: () => setActiveTab(tab),
+                    className:
+                      'px-6 py-4 font-semibold ' +
+                      (activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600')
+                  }, tab.charAt(0).toUpperCase() + tab.slice(1))
+                )
+              ),
+
+              e('div', { className: 'p-6' },
+
+                activeTab === 'overview' && e('div', { className: 'grid md:grid-cols-4 gap-4' },
+                  ['marketCap', 'pe', 'roe', 'sentiment'].map(key =>
+                    e('div', { key, className: 'bg-gray-50 rounded p-4' },
+                      e('div', { className: 'text-sm text-gray-600' }, key),
+                      e('div', { className: 'text-xl font-bold' }, stockData[key])
+                    )
+                  )
+                ),
+
+                activeTab === 'fundamental' && e('div', { className: 'space-y-3' },
+                  e('div', null, 'Revenue Growth: ', stockData.revenueGrowth),
+                  e('div', null, 'Earnings Growth: ', stockData.earningsGrowth),
+                  e('div', null, 'Profit Margin: ', stockData.profitMargin)
+                ),
+
+                activeTab === 'news' && e('div', { className: 'space-y-2' },
+                  e('div', null, stockData.symbol, ' beats earnings expectations'),
+                  e('div', null, 'Analysts upgrade outlook'),
+                  e('div', null, 'Market sentiment remains ', stockData.sentiment)
+                )
+
+              )
+            )
+          )
+        ),
+
+        e('footer', { className: 'bg-gray-900 text-white py-6 mt-12' },
+          e('div', { className: 'text-center text-sm text-gray-400' },
+            '© 2026 AI Stock Research Platform • Educational use only'
+          )
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+  </script>
+</body>
+</html>
